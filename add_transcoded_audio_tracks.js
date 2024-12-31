@@ -62,6 +62,8 @@ const plugin = (file, libraryOptions, inputs) => {
     }
     
     const pluginWatermark = "[Tdarr:add_transcoded_audio_tracks:processed]";
+	
+	log("--- Starting Add Transcoded Audio Tracks plugin on " + file.file + " ...");
 
     // Retrieve the list of codecs to convert and the target codec from the inputs
     const codecsToConvert = inputs.codecsToConvert ? inputs.codecsToConvert.split(',').map(c => c.trim().toLowerCase()) : ['truehd', 'eac3', 'dts'];
@@ -79,15 +81,7 @@ const plugin = (file, libraryOptions, inputs) => {
         log('Invalid file for processing, FFProbe data missing');
         return response;
     }
-    
-    log("FFProbeData present, extracting audio tracks data...");
-    const audioTracks = file.ffProbeData.streams.filter(stream => stream.codec_type === 'audio');
-    if (audioTracks.length === 0) {
-        log('No audio tracks, nothing to do');
-        return response;
-    }
-    log(audioTracks.length + " audio tracks");
-    
+
     // Check plugin didn't process the file already
     let copyrightData = file.ffProbeData.format && file.ffProbeData.format.tags && file.ffProbeData.format.tags.COPYRIGHT || '';
     if (copyrightData.includes(pluginWatermark)) {
@@ -95,6 +89,15 @@ const plugin = (file, libraryOptions, inputs) => {
         return response;
     }
 
+    // Extract audio tracks data
+	log("FFProbeData present, extracting audio tracks data...");
+    const audioTracks = file.ffProbeData.streams.filter(stream => stream.codec_type === 'audio');
+    if (audioTracks.length === 0) {
+        log('No audio tracks, nothing to do');
+        return response;
+    }
+    log(audioTracks.length + " audio tracks");
+    
     // Check each audio track
     const newAudioTracks = [];
     let audioTrackIndex = -1;
@@ -146,14 +149,14 @@ const plugin = (file, libraryOptions, inputs) => {
     });
 
     // If new audio tracks were created, build the ffmpeg command
-    if (newAudioTracks.length > 0) {
+    if (newAudioTrackIndex > audioTrackIndex) {
         response.processFile = true;
         response.preset = ',' + 
             '-map 0:v -c:v copy ' + // Copy video stream without re-encoding
             newAudioTracks.join(' ') + ' ' + // Add audio tracks
-            '-map 0:s? ' + // Copy subtitles
+            '-map 0:s? -c:s copy ' + // Copy subtitles
             '-metadata \'copyright=' + copyrightData + pluginWatermark + '\''; // Add plugin watermark
-        log(`Added ${targetCodec} tracks to audio streams`);
+        log(`Added ${newAudioTrackIndex-audioTrackIndex} transcoded ${targetCodec.toUpperCase()} tracks to audio streams`);
     } else {
         log("Nothing to convert.");
     }
