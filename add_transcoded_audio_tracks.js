@@ -209,7 +209,7 @@ const plugin = (file, libraryOptions, inputs) => {
 			audioTracksCommands.push(`-b:a:${outputAudioTrackIndex} ${bitrate}`); // Set bitrate
 			audioTracksCommands.push(`-ac:${outputAudioTrackIndex} ${channels}`); // Set channels
 			audioTracksCommands.push(`-metadata:s:a:${outputAudioTrackIndex} 'language=${lang}'`); // Set language
-			audioTracksCommands.push(`-metadata:s:a:${outputAudioTrackIndex} 'title=${title}'`); // Set track title
+			audioTracksCommands.push(`-metadata:s:a:${outputAudioTrackIndex} "title=${title}"`); // Set track title
 		}
 		else { // -> copy the original track
 			log(`Track ${inputAudioTrackIndex} doesn't require transcoding (${track.codec_name.toUpperCase()}), copying the original track`);
