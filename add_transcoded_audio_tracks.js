@@ -193,7 +193,6 @@ const plugin = (file, libraryOptions, inputs) => {
 			}
 			
 			// Prepare track title
-			const title = (track.tags && track.tags.title ? track.tags.title + ' -> ' : lang.toUpperCase()) + ` ${targetCodec.toUpperCase()} ${channels}ch ${bitrate/1000}kbps [Auto]`;
 			
 			// Copy original track if no overwrite required
 			if(!overwriteTrack) {
