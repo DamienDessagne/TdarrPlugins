@@ -224,7 +224,7 @@ const plugin = (file, libraryOptions, inputs) => {
 			'-map 0:v -c:v copy ' + // Copy video stream without re-encoding
 			audioTracksCommands.join(' ') + ' ' + // Add audio tracks
 			'-map 0:s? -c:s copy ' + // Copy subtitles
-			'-metadata \'copyright=' + copyrightData + pluginWatermark + '\''; // Add plugin watermark
+			'-metadata "copyright=' + copyrightData + pluginWatermark + '"'; // Add plugin watermark
 	} else {
 		log("Nothing to convert.");
 	}
