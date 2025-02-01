@@ -30,7 +30,7 @@ const details = () => ({
             name: 'bitrate',
             type: 'string',
             defaultValue: '*',
-            tooltip: 'A bitrate selectors (e.g., `<=640000`, `>128000`, etc.) to match, or `*` for all bitrates.',
+            tooltip: 'A bitrate selector (e.g., `<=640000`, `>128000`, etc.) to match, or `*` for all bitrates.',
         },
         {
             name: 'languages',
