@@ -1,7 +1,6 @@
 /**
- * Tdarr Plugin: Add Transcoded Audio Tracks
- * Description: This plugin adds a transcoded version of each audio track that is not already in the target codec,
- * retaining the channels, bitrate, and language of the original track. The codecs to convert can be defined in the Tdarr web interface.
+ * Tdarr Plugin: Rename Audio Tracks
+ * Description: Renames audio tracks using many selection criteria and regexp
  */
 
 // Plugin details (metadata)
@@ -11,7 +10,7 @@ const details = () => ({
     Name: 'Rename Audio Tracks',
     Type: 'Audio',
     Operation: 'Transcode',
-    Description: 'Renames audio tracks using regexp.',
+    Description: 'Renames audio tracks using many selection criteria and regexp.',
     Version: '1.0',
     Tags: 'action,audio',
     Inputs: [
@@ -38,6 +37,12 @@ const details = () => ({
             type: 'string',
             defaultValue: '*',
             tooltip: 'A semicolon separated list of language selectors (e.g., `eng`, `eng;fre`, etc.) to match, or `*` for all languages.',
+        },
+        {
+            name: 'dispositions',
+            type: 'string',
+            defaultValue: '',
+            tooltip: 'A semicolon separated list of ffprobe\'s disposition `key:value` pairs to match (e.g., `default:1`, `comment:1;hearing_impaired:1`, etc.). Matches only if all `key:value` pairs are met.',
         },
         {
             name: 'pattern',
@@ -90,7 +95,7 @@ const plugin = (file, libraryOptions, inputs) => {
         response.infoLog += entry + "\n";
     }
 
-    function matchesCondition (value, condition) {
+    function matchesIntCondition (value, condition) {
         if (condition === "*") return true;
         if (condition.startsWith("<=")) return value <= parseInt(condition.slice(2));
         if (condition.startsWith(">=")) return value >= parseInt(condition.slice(2));
@@ -100,14 +105,15 @@ const plugin = (file, libraryOptions, inputs) => {
     }
 
     // Tests a given track data against the given selectors
-    function trackMatches(trackData, codecs, channels, bitrate, languages, pattern, caseSensitive) {
+    function trackMatches(trackData, codecs, channels, bitrate, languages, dispositions, pattern, caseSensitive) {
         if(!codecs.includes('*') && !codecs.includes(trackData.codec_name.toLowerCase())) return false;
-        if(!matchesCondition(trackData.channels, channels)) return false;
-        if(!matchesCondition(trackData.bit_rate, bitrate)) return false;
+        if(!matchesIntCondition(trackData.channels, channels)) return false;
+        if(!matchesIntCondition(trackData.bit_rate, bitrate)) return false;
         if(!languages.includes('*')) {
             const trackLanguage = trackData.tags && trackData.tags.language ? trackData.tags.language : 'und';
             if (!languages.includes(trackLanguage)) return false;
         }
+        if(!Object.entries(dispositions).every(([key, value]) => key in trackData.disposition && trackData.disposition[key] === value)) return false;
 
         const trackTitle = (trackData.tags && trackData.tags.title ? trackData.tags.title : '');
         const patternRegExp = caseSensitive ? new RegExp(pattern) : new RegExp(pattern, "i");
@@ -134,11 +140,12 @@ const plugin = (file, libraryOptions, inputs) => {
     const channels = inputs.channels.trim();
     const bitrate = inputs.bitrate.trim();
     const languages = inputs.languages.split(';').map(l => l.trim());
+    const dispositions = Object.fromEntries(inputs.dispositions.split(";").map(pair => { const [key, value] = pair.split(":"); return [key.trim(), isNaN(value) ? value.trim() : Number(value)]; }));
     const pattern = inputs.pattern;
     const caseSensitive = inputs.caseSensitive === 'true';
     const renameTo = inputs.renameTo;
 
-    const pluginWatermark = `[Tdarr:rename_audio_tracks:${details().Version}:${codecs.join('|')}:${channels}:${bitrate}:${languages.join('|')}:${pattern}:${caseSensitive?"g":"gi"}:${renameTo}]`;
+    const pluginWatermark = `[Tdarr:rename_audio_tracks:${details().Version}:${codecs.join('|')}:${channels}:${bitrate}:${languages.join('|')}:${inputs.dispositions}:${pattern}:${caseSensitive?"g":"gi"}:${renameTo}]`;
 
 
     // Check if the file is valid for processing
@@ -172,7 +179,7 @@ const plugin = (file, libraryOptions, inputs) => {
         audioTrackIndex += 1;
 
         // Test track against all selection criteria:
-        if (trackMatches(track, codecs, channels, bitrate, languages, pattern, caseSensitive)) {
+        if (trackMatches(track, codecs, channels, bitrate, languages, dispositions, pattern, caseSensitive)) {
             log(`Track ${audioTrackIndex} matches the selector, renaming ...`);
 
             const trackTitle = (track.tags && track.tags.title ? track.tags.title : '');
