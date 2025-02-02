@@ -48,15 +48,18 @@ const details = () => ({
             ⠀\\n
             "operations" objects definition:\\n
             ⠀- "copy" : Set this to an object to copy the original track. /!\\ WARNING /!\\ IF YOU DO NOT COPY THE ORIGINAL TRACK, ANY ORIGINAL MATCHING TRACK WILL BE DELETED FROM THE ORIGINAL FILE /!\\\\n
-            ⠀    ⠀- title: (optional) the new track title. Retains the original track's title when omitted. Check below for the list of available tags you can use.\\n
+            ⠀    ⠀- "title": (optional) the new track title. Retains the original track's title when omitted. Check below for the list of available tags you can use.\\n
+            ⠀    ⠀- "dispositions": (optional) an object containing ffprobe's disposition "key:boolean_value" pairs to set on the copied track (e.g., {"default":false}, {"comment":true,"hearing_impaired":false}, etc.).\\n
             ⠀- "transcode" :\\n
-            ⠀    ⠀- codec: the new codec to transcode to, or "copy" to copy the original track's codec.\\n
-            ⠀    ⠀- channels: (optional) new number of channels (e.g., "6" for 5.1, "2" for stereo, etc.). Copies the original number of channels when omitted (respecting codecs limitations automatically).\\n
-            ⠀    ⠀- bitrate: (optional) new bitrate in bps. Omit if the codec is a lossless codec, or to copy the original bitrate (respecting codecs limitations automatically).\\n
-            ⠀    ⠀- title: (optional) the new track title. Retains the original track's title when omitted. Check below for the list of available tags you can use.\\n
+            ⠀    ⠀- "codec": the new codec to transcode to, or "copy" to copy the original track's codec.\\n
+            ⠀    ⠀- "channels": (optional) new number of channels (e.g., "6" for 5.1, "2" for stereo, etc.). Copies the original number of channels when omitted (respecting codecs limitations automatically).\\n
+            ⠀    ⠀- "bitrate": (optional) new bitrate in bps. Omit if the codec is a lossless codec, or to copy the original bitrate (respecting codecs limitations automatically).\\n
+            ⠀    ⠀- "title": (optional) the new track title. Retains the original track's title when omitted. Check below for the list of available tags you can use.\\n
+            ⠀    ⠀- "dispositions": (optional) an object containing ffprobe's disposition "key:boolean_value" pairs to set on the transcoded track (e.g., {"default":false}, {"comment":true,"hearing_impaired":false}, etc.).\\n
             ⠀\\n
             "title" available tags:\\n
             ⠀- "{1}, {2}, etc." : the capture groups of the "pattern" regexp if any were used\\n
+            ⠀- "{title}" : the title of the original track\\n
             ⠀- "{lang}, {LANG}" : the language of the track, in lowercase or uppercase\\n
             ⠀- "{i_codec}, {i_CODEC}, {o_codec}, {o_CODEC}" : the name of the input (i_) or output (o_) codec, in lowercase or uppercase\\n
             ⠀- "{i_channels}, {o_channels}" : the number of input (i_) or output (o_) channels of the track\\n
@@ -64,11 +67,76 @@ const details = () => ({
             ⠀- "{i_channel_layout}" : the channels layout reported by ffprobe on the input track (e.g., \`5.1(side)\`)\\n
             ⠀- "{i_bitrate}, {i_bitrate_kbps}, {o_bitrate}, {o_bitrate_kbps}" : the input (i_) or output (o_) bitrate in bps or kbps\\n
             ⠀\\n
+            Example:\\n
             ⠀\\n
-            Examples:\\n
+            [\\n
+            ⠀⠀{\\n
+            ⠀⠀⠀⠀"match": {\\n
+            ⠀⠀⠀⠀⠀⠀"codecs": "*",\\n
+            ⠀⠀⠀⠀⠀⠀"dispositions": {\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀"comment": "1"\\n
+            ⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀},\\n
+            ⠀⠀⠀⠀"operations": []\\n
+            ⠀⠀},\\n
+            ⠀⠀{\\n
+            ⠀⠀⠀⠀"match": {\\n
+            ⠀⠀⠀⠀⠀⠀"codecs": ["truehd","flac"],\\n
+            ⠀⠀⠀⠀⠀⠀"channels": ">6"\\n
+            ⠀⠀⠀⠀},\\n
+            ⠀⠀⠀⠀"operations": [\\n
+            ⠀⠀⠀⠀⠀⠀{\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀"transcode": {\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"codec": "aac",\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"bitrate": 768000,\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"title": "{title} {i_CODEC} -> {o_CODEC} {o_channels_fancy} {o_bitrate_kbps}kbps [Auto]",\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"dispositions": {\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"default": true,\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"comment": false\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀⠀⠀},\\n
+            ⠀⠀⠀⠀⠀⠀{\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀"copy": {\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"dispositions": {\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"default": false,\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"comment": false\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀]\\n
+            ⠀⠀},\\n
+            ⠀⠀{\\n
+            ⠀⠀⠀⠀"match": {\\n
+            ⠀⠀⠀⠀⠀⠀"codecs": ["eac3","truehd","flac"],\\n
+            ⠀⠀⠀⠀⠀⠀"channels": "<=6",\\n
+            ⠀⠀⠀⠀⠀⠀"title": {\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀"pattern": "(.*)"\\n
+            ⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀},\\n
+            ⠀⠀⠀⠀"operations": [\\n
+            ⠀⠀⠀⠀⠀⠀{\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀"transcode": {\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"codec": "ac3",\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"title": "{1} {i_CODEC} {i_channels_fancy} {i_bitrate_kbps}kbps -> {o_CODEC} {o_channels_fancy} {o_bitrate_kbps}kbps [Auto]"\\n
+            ⠀⠀⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀⠀⠀}\\n
+            ⠀⠀⠀⠀]\\n
+            ⠀⠀},\\n
+            ⠀⠀{\\n
+            ⠀⠀⠀⠀"match": {\\n
+            ⠀⠀⠀⠀⠀⠀"codecs": "*"\\n
+            ⠀⠀⠀⠀},\\n
+            ⠀⠀⠀⠀"operations": []\\n
+            ⠀⠀}\\n
+            ]\\n
             ⠀\\n
-            // TODO\\n
-            `,
+            ⠀1st rule: removes all commentary tracks. Matches any tracks in any codec with the disposition flag "comment" set to 1.\\n
+            ⠀2nd rule: matches any track with more than 6 channels (7.1 and more) in a lossless format (TrueHD or FLAC) with an AAC 768kbps version of it, placing it before the original track, and setting it to default and not comment, 
+            while setting the original track to not default and not comment, renaming it accordingly with the original title followed by a description of the transcoding characteristics.\\n
+            ⠀3rd rule: matches any track in E-AC3, TrueHD or FLAC with 6 channels or less (from mono to 5.1), and replaces it with an AC3 version of it, retaining all characteristics, and renaming it accordingly with the 
+            original title followed by a description of the transcoding characteristics.\\n
+            ⠀4th rule: removes any track that didn't match previous rules.\\n`,
         },
         {
             name: 'dryRun',
@@ -154,6 +222,13 @@ const plugin = (file, libraryOptions, inputs) => {
                     if (operation.hasOwnProperty('copy')) {
                         if (typeof operation.copy !== 'object' || operation.copy === null) return `'copy' operation at index ${j} in rule at index ${i} must be an object.`;
                         if (operation.copy.hasOwnProperty('title') && typeof operation.copy.title !== 'string') return `'title' property in 'copy' operation at index ${j} in rule at index ${i} must be a string.`;
+                        if (operation.copy.hasOwnProperty('dispositions')) {
+                            if(typeof operation.copy.dispositions !== 'object' || operation.copy.dispositions === null) return `'dispositions' property in 'copy' operation at index ${j} in rule at index ${i} must be an object.`;
+                            for(let flag in operation.copy.dispositions) { if(typeof operation.copy.dispositions[flag] !== 'boolean')
+                                return `'${flag}' property in 'dispositions' object in 'copy' operation at index ${j} rule at index ${i} must be a boolean.`;
+                            }
+                        }
+
                     } else if (operation.hasOwnProperty('transcode')) {
                         if (typeof operation.transcode !== 'object' || operation.transcode === null) return `'transcode' operation at index ${j} in rule at index ${i} must be an object.`;
                         if (!operation.transcode.hasOwnProperty('codec')) return `'transcode' operation at index ${j} in rule at index ${i} is missing 'codec' property.`;
@@ -161,6 +236,12 @@ const plugin = (file, libraryOptions, inputs) => {
                         if (operation.transcode.hasOwnProperty('channels') && typeof operation.transcode.channels !== 'number') return `'channels' property in 'transcode' operation at index ${j} in rule at index ${i} must be a number.`;
                         if (operation.transcode.hasOwnProperty('bitrate') && typeof operation.transcode.bitrate !== 'number') return `'bitrate' property in 'transcode' operation at index ${j} in rule at index ${i} must be a number.`;
                         if (operation.transcode.hasOwnProperty('title') && typeof operation.transcode.title !== 'string') return `'title' property in 'transcode' operation at index ${j} in rule at index ${i} must be a string.`;
+                        if (operation.transcode.hasOwnProperty('dispositions')) {
+                            if(typeof operation.transcode.dispositions !== 'object' || operation.transcode.dispositions === null) return `'dispositions' property in 'transcode' operation at index ${j} in rule at index ${i} must be an object.`;
+                            for(let flag in operation.transcode.dispositions) { if(typeof operation.transcode.dispositions[flag] !== 'boolean')
+                                return `'${flag}' property in 'dispositions' object in 'transcode' operation at index ${j} rule at index ${i} must be a boolean.`;
+                            }
+                        }
                     } else {
                         return `Operation at index ${j} in rule at index ${i} must have either 'copy' or 'transcode' property.`;
                     }
@@ -227,19 +308,24 @@ const plugin = (file, libraryOptions, inputs) => {
     // Returns the track's title based on the given rule
     function getNewTrackTitle(track, matchTitle, operation, bitrate) {
         const trackTitle = (track.tags && track.tags.title ? track.tags.title : '');
-        const patternRegExp = new RegExp(matchTitle.pattern, matchTitle.caseSensitive ? "g" : "gi");
-
         let newTrackTitle = operation.title + "";
+
         function updateTrackTitle(find, replaceWith) {
             newTrackTitle = newTrackTitle.replaceAll(find, replaceWith);
         }
 
         // Capture groups:
-        for (const match of trackTitle.matchAll(patternRegExp)) {
-            match.slice(1).forEach((group, index) => {
-                updateTrackTitle("{" + (index + 1) + "}", group);
-            });
+        if(matchTitle) {
+            const patternRegExp = new RegExp(matchTitle.pattern, matchTitle.caseSensitive ? "g" : "gi");
+            for (const match of trackTitle.matchAll(patternRegExp)) {
+                match.slice(1).forEach((group, index) => {
+                    updateTrackTitle("{" + (index + 1) + "}", group);
+                });
+            }
         }
+
+        // Title:
+        updateTrackTitle("{title}", trackTitle);
 
         // Languages:
         const trackLanguage = track.tags && track.tags.language ? track.tags.language : 'und';
@@ -273,6 +359,17 @@ const plugin = (file, libraryOptions, inputs) => {
         }
 
         return newTrackTitle;
+    }
+
+    // Returns the FFMpeg command flags from the given disposition's object
+    function getDispositionFlags(dispositions) {
+        const flags = [];
+        let isFirstFlag = true;
+        for (const [flag, value] of Object.entries(dispositions)) {
+            flags.push(value === true ? (isFirstFlag? flag : '+' + flag) : '-' + flag);
+            isFirstFlag = false;
+        }
+        return flags.join('');
     }
 
 
@@ -325,12 +422,13 @@ const plugin = (file, libraryOptions, inputs) => {
 
         // Test the track against each rule
         let ruleMatched = false;
+        const trackTitle = (track.tags && track.tags.title ? track.tags.title : '');
+
         transcodeRules.forEach(rule => {
             if(ruleMatched) return;
             if(!trackMatches(track, rule.match)) return;
 
             ruleMatched = true;
-            const trackTitle = (track.tags && track.tags.title ? track.tags.title : '');
             log(`Track ${track.index} (title: "${trackTitle}") matches ${JSON.stringify(rule.match)}, applying operations ...`);
 
             if(rule.operations.length === 0) {
@@ -339,21 +437,27 @@ const plugin = (file, libraryOptions, inputs) => {
             else {
                 // Apply operations
                 rule.operations.forEach(operation => {
+                    let logEntry = ' -> ';
+
                     // Copy a track:
                     if(operation.copy) {
+                        logEntry += 'Copying track';
                         audioTracksCommands.push(`-map 0:a:${inputTrackIndex} -c:a:${outputTrackIndex} copy`);
                         if(operation.copy.title) {
                             const newTrackTitle = getNewTrackTitle(track, rule.match.title, operation.copy, track.bit_rate);
-                            log(` -> Copying track, renaming it to "${newTrackTitle}"`);
+                            logEntry += `, renaming it to "${newTrackTitle}"`;
                             audioTracksCommands.push(`-metadata:s:a:${outputTrackIndex} "title=${newTrackTitle}"`);
                         }
-                        else
-                            log(" -> Copying track")
+                        if(operation.copy.dispositions) {
+                            const dispositionsFlags = getDispositionFlags(operation.copy.dispositions);
+                            logEntry += `, dispositions ${dispositionsFlags}`;
+                            audioTracksCommands.push(`-disposition:a:${outputTrackIndex} ${dispositionsFlags}`);
+                        }
                     }
 
                     // Transcode a track:
                     else if(operation.transcode) {
-                        let logEntry = ' -> Transcoding to ';
+                        logEntry += 'Transcoding to ';
                         audioTracksCommands.push(`-map 0:a:${inputTrackIndex}`); // Map the original audio track
 
                         // Set new codec
@@ -384,14 +488,26 @@ const plugin = (file, libraryOptions, inputs) => {
                         audioTracksCommands.push(`-metadata:s:a:${outputTrackIndex} "title=${newTrackTitle}"`); // Set track title
                         logEntry += ` renamed to "${newTrackTitle}"`;
 
-                        log(logEntry);
+                        if(operation.transcode.dispositions) {
+                            const dispositionsFlags = getDispositionFlags(operation.transcode.dispositions);
+                            logEntry += `, dispositions ${dispositionsFlags}`;
+                            audioTracksCommands.push(`-disposition:a:${outputTrackIndex} ${dispositionsFlags}`);
+                        }
                     }
 
+                    log(logEntry);
                     outputTrackIndex++;
                     requireTranscode = true;
                 });
             }
         });
+
+        if(!ruleMatched) {
+            log(`Track ${track.index} (title: "${trackTitle}") didn't match any rule, copying track`);
+            audioTracksCommands.push(`-map 0:a:${inputTrackIndex} -c:a:${outputTrackIndex} copy`);
+            outputTrackIndex++;
+        }
+
         inputTrackIndex++;
     });
 
