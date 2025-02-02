@@ -140,13 +140,14 @@ const plugin = (file, libraryOptions, inputs) => {
     const channels = inputs.channels.trim();
     const bitrate = inputs.bitrate.trim();
     const languages = inputs.languages.split(';').map(l => l.trim());
-    const dispositions = Object.fromEntries(inputs.dispositions.split(";").map(pair => { const [key, value] = pair.split(":"); return [key.trim(), isNaN(value) ? value.trim() : Number(value)]; }));
+    const dispositions = inputs.dispositions ? Object.fromEntries(inputs.dispositions.split(";").map(pair => { const [key, value] = pair.split(":"); return [key.trim(), isNaN(value) ? value.trim() : Number(value)]; })) : {};
     const pattern = inputs.pattern;
     const caseSensitive = inputs.caseSensitive === 'true';
     const renameTo = inputs.renameTo;
 
-    const pluginWatermark = `[Tdarr:rename_audio_tracks:${details().Version}:${codecs.join('|')}:${channels}:${bitrate}:${languages.join('|')}:${inputs.dispositions}:${pattern}:${caseSensitive?"g":"gi"}:${renameTo}]`;
-
+    const pluginWatermark = "[Tdarr:rename_audio_tracks:" +
+        btoa(`${details().Version}:${codecs.join('|')}:${channels}:${bitrate}:${languages.join('|')}:${inputs.dispositions}:${pattern}:${caseSensitive?"g":"gi"}:${renameTo})`) +
+        "]";
 
     // Check if the file is valid for processing
     log("Checking for ffProbeData...");
