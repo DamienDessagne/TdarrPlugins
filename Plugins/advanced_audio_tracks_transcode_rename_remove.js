@@ -28,10 +28,11 @@ const details = () => ({
             Use tools like https://jsonformatter.org/ to easily create and modify your rules.\\n
             ⠀\\n
             ⠀\\n
-            Expected JSON format: an array of objects, each containing 2 entries:\\n
+            Expected JSON format: an array of objects, each of the form:\\n
             ⠀- "match" : defines the set of rules an audio track must match with to have "operations" executed upon.\\n
             ⠀- "operations" : defines the list of operations to apply to audio tracks that matches. Leaving the "operations" array empty will remove the track from the original file. 
                               Use "copy" operation to keep a copy of the original track.\\n
+            ⠀- "name" : (optional) the name of the rule, used for logging and useful to keep track of what exactly a rule does.\\n
             ⠀\\n
             "match" object definition:\\n
             ⠀- "codecs" : either an array of codecs to match, or "*" for all codecs, or "!codec" (e.g., "!aac", "!eac3") for all codecs except the one listed. Usual ones are : 
@@ -72,6 +73,7 @@ const details = () => ({
             ⠀\\n
             [\\n
             ⠀⠀{\\n
+            ⠀⠀⠀⠀"name": "Remove comments",\\n
             ⠀⠀⠀⠀"match": {\\n
             ⠀⠀⠀⠀⠀⠀"codecs": "*",\\n
             ⠀⠀⠀⠀⠀⠀"dispositions": {\\n
@@ -81,6 +83,7 @@ const details = () => ({
             ⠀⠀⠀⠀"operations": []\\n
             ⠀⠀},\\n
             ⠀⠀{\\n
+            ⠀⠀⠀⠀"name": "Lossless 7.1+ to AAC 7.1+ 768kbps, before original track",\\n
             ⠀⠀⠀⠀"match": {\\n
             ⠀⠀⠀⠀⠀⠀"codecs": ["truehd","flac"],\\n
             ⠀⠀⠀⠀⠀⠀"channels": ">6"\\n
@@ -108,6 +111,7 @@ const details = () => ({
             ⠀⠀⠀⠀]\\n
             ⠀⠀},\\n
             ⠀⠀{\\n
+            ⠀⠀⠀⠀"name": "Transcode and replace E-AC3/TrueHD/FLAC 5.1 and less by an AC3 version",\\n
             ⠀⠀⠀⠀"match": {\\n
             ⠀⠀⠀⠀⠀⠀"codecs": ["eac3","truehd","flac"],\\n
             ⠀⠀⠀⠀⠀⠀"channels": "<=6",\\n
@@ -125,6 +129,7 @@ const details = () => ({
             ⠀⠀⠀⠀]\\n
             ⠀⠀},\\n
             ⠀⠀{\\n
+            ⠀⠀⠀⠀"name": "Delete all other tracks",\\n
             ⠀⠀⠀⠀"match": {\\n
             ⠀⠀⠀⠀⠀⠀"codecs": "*"\\n
             ⠀⠀⠀⠀},\\n
@@ -431,7 +436,7 @@ const plugin = (file, libraryOptions, inputs) => {
             if(!trackMatches(track, rule.match)) return;
 
             ruleMatched = true;
-            log(`Track ${track.index} (title: "${trackTitle}") matches ${JSON.stringify(rule.match)}, applying operations ...`);
+            log(`Track ${track.index} (title: "${trackTitle}") matches rule "${rule.name ? rule.name : JSON.stringify(rule.match)}", applying operations ...`);
 
             if(rule.operations.length === 0) {
                 log(" -> Removing track");
