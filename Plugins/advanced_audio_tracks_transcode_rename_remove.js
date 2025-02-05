@@ -34,8 +34,9 @@ const details = () => ({
                               Use "copy" operation to keep a copy of the original track.\\n
             ⠀\\n
             "match" object definition:\\n
-            ⠀- "codecs" : an array of codecs to match or "*" for all codecs. Usual ones are : "aac, ac3, eac3, flac, libmp3lame, libopus, truehd, libvorbis".
-            Use the command "ffmpeg -encoders" or "ffmpeg -decoders" for a complete list of available codecs.\\n
+            ⠀- "codecs" : either an array of codecs to match, or "*" for all codecs, or "!codec" (e.g., "!aac", "!eac3") for all codecs except the one listed. Usual ones are : 
+                          "aac, ac3, eac3, flac, libmp3lame, libopus, truehd, libvorbis". 
+                          Use the command "ffmpeg -encoders" or "ffmpeg -decoders" for a complete list of available codecs.\\n
             ⠀- "channels" : (optional) a channels selectors (e.g., "<=6", ">2", "8", etc.), or an array of channels selectors to match. Matches all channels when omitted.\\n
             ⠀- "bitrate" : (optional) a bitrate selector (e.g., "<=640000", ">128000", etc.) or an array of bitrates to match. Matches all bitrates when omitted.\\n
             ⠀- "languages" : (optional) a string or an array of languages to match (e.g., "eng", "fre", etc.) to match. Matches all languages when omitted.\\n
@@ -196,7 +197,7 @@ const plugin = (file, libraryOptions, inputs) => {
                 const match = rule.match;
                 if (typeof match !== 'object' || match === null) return `Match property in rule at index ${i} is not an object.`;
                 if (!match.hasOwnProperty('codecs')) return `Match property in rule at index ${i} is missing 'codecs' property.`;
-                if (!Array.isArray(match.codecs) && match.codecs !== '*') return `'codecs' property in rule at index ${i} must be an array or '*'.`;
+                if (!Array.isArray(match.codecs) && match.codecs !== '*' && !match.codecs.startsWith('!')) return `'codecs' property in rule at index ${i} must be an array, '*', or '!codec'.`;
 
                 if (match.hasOwnProperty('channels') && typeof match.channels !== 'string' && !Array.isArray(match.channels)) return `'channels' property in rule at index ${i} must be a string or an array.`;
                 if (match.hasOwnProperty('bitrate') && typeof match.bitrate !== 'string' && !Array.isArray(match.bitrate)) return `'bitrate' property in rule at index ${i} must be a string or an array.`;
@@ -266,7 +267,8 @@ const plugin = (file, libraryOptions, inputs) => {
 
     // Tests a given track data against the given selectors
     function trackMatches(trackData, matchRule) {
-        if(!matchRule.codecs.includes('*') && !matchRule.codecs.includes(trackData.codec_name.toLowerCase())) return false;
+        if( (Array.isArray(matchRule.codecs) && !matchRule.codecs.includes(trackData.codec_name.toLowerCase())) ||
+            (!Array.isArray(matchRule.codecs) && matchRule.codecs !== '*' && trackData.codec_name.toLowerCase() === matchRule.codecs.slice(1).toLowerCase()) ) return false;
 
         if(matchRule.channels) {
             const channelsRules = Array.isArray(matchRule.channels) ? matchRule.channels : [matchRule.channels];
@@ -488,6 +490,7 @@ const plugin = (file, libraryOptions, inputs) => {
                         audioTracksCommands.push(`-metadata:s:a:${outputTrackIndex} "title=${newTrackTitle}"`); // Set track title
                         logEntry += ` renamed to "${newTrackTitle}"`;
 
+                        // Set track's new dispositions
                         if(operation.transcode.dispositions) {
                             const dispositionsFlags = getDispositionFlags(operation.transcode.dispositions);
                             logEntry += `, dispositions ${dispositionsFlags}`;
