@@ -58,6 +58,7 @@ const details = () => ({
             ⠀    ⠀- "bitrate": (optional) new bitrate in bps. Omit if the codec is a lossless codec, or to copy the original bitrate (respecting codecs limitations automatically).\\n
             ⠀    ⠀- "title": (optional) the new track title. Retains the original track's title when omitted. Check below for the list of available tags you can use.\\n
             ⠀    ⠀- "dispositions": (optional) an object containing ffprobe's disposition "key:boolean_value" pairs to set on the transcoded track (e.g., {"default":false}, {"comment":true,"hearing_impaired":false}, etc.).\\n
+            ⠀    ⠀- "filters": (optional) a string containing ffmpeg filters to apply to the track (e.g., "dynaudnorm").\\n
             ⠀\\n
             "title" available tags:\\n
             ⠀- "{1}, {2}, etc." : the capture groups of the "pattern" regexp if any were used\\n
@@ -69,7 +70,7 @@ const details = () => ({
             ⠀- "{i_channel_layout}" : the channels layout reported by ffprobe on the input track (e.g., \`5.1(side)\`)\\n
             ⠀- "{i_bitrate}, {i_bitrate_kbps}, {o_bitrate}, {o_bitrate_kbps}" : the input (i_) or output (o_) bitrate in bps or kbps\\n
             ⠀\\n
-            Example:\\n
+            Example JSON:\\n
             ⠀\\n
             [\\n
             ⠀⠀{\\n
@@ -248,6 +249,7 @@ const plugin = (file, libraryOptions, inputs) => {
                                 return `'${flag}' property in 'dispositions' object in 'transcode' operation at index ${j} rule at index ${i} must be a boolean.`;
                             }
                         }
+                        if (operation.transcode.hasOwnProperty('filters') && typeof operation.transcode.filters !== 'string') return `'filters' property in 'transcode' operation at index ${j} in rule at index ${i} must be a string.`;
                     } else {
                         return `Operation at index ${j} in rule at index ${i} must have either 'copy' or 'transcode' property.`;
                     }
@@ -491,15 +493,23 @@ const plugin = (file, libraryOptions, inputs) => {
                         }
 
                         // Set track's title
-                        const newTrackTitle = getNewTrackTitle(track, rule.match.title, operation.transcode, bitrate);
-                        audioTracksCommands.push(`-metadata:s:a:${outputTrackIndex} "title=${newTrackTitle}"`); // Set track title
-                        logEntry += ` renamed to "${newTrackTitle}"`;
+                        if(operation.transcode.title) {
+                            const newTrackTitle = getNewTrackTitle(track, rule.match.title, operation.transcode, bitrate);
+                            audioTracksCommands.push(`-metadata:s:a:${outputTrackIndex} "title=${newTrackTitle}"`); // Set track title
+                            logEntry += ` renamed to "${newTrackTitle}"`;
+                        }
 
                         // Set track's new dispositions
                         if(operation.transcode.dispositions) {
                             const dispositionsFlags = getDispositionFlags(operation.transcode.dispositions);
                             logEntry += `, dispositions ${dispositionsFlags}`;
                             audioTracksCommands.push(`-disposition:a:${outputTrackIndex} ${dispositionsFlags}`);
+                        }
+
+                        // Set track's filters
+                        if(operation.transcode.filters) {
+                            logEntry += `, filters "${operation.transcode.filters}"`;
+                            audioTracksCommands.push(`-filter:a:${outputTrackIndex} "${operation.transcode.filters}"`);
                         }
                     }
 
