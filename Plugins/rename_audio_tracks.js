@@ -81,6 +81,9 @@ const details = () => ({
 
 // Plugin logic (functionality)
 const plugin = (file, libraryOptions, inputs) => {
+    const lib = require('../methods/lib')();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars,no-param-reassign
+    inputs = lib.loadDefaultValues(inputs, details);
     const response = {
         processFile: false, // Set to true if the file needs processing
         container: `.${file.container}`,
