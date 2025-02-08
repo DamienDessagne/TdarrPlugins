@@ -12,7 +12,7 @@ const details = () => ({
     Operation: 'Transcode',
     Description: 'Performs "transcode", "rename" or "remove" operations on audio tracks that matches specified conditions.',
     Version: '1.0',
-    Tags: 'action,audio',
+    Tags: 'audio only,ffmpeg,pre-processing,configurable',
     Inputs: [
         {
             name: 'transcodeRules',

@@ -13,7 +13,7 @@ const details = () => ({
 	Operation: 'Transcode',
 	Description: 'Adds transcoded tracks for specified audio codecs, retaining or replacing original streams.',
 	Version: '1.0',
-	Tags: 'action,audio',
+	Tags: 'audio only,ffmpeg,pre-processing,configurable',
 	Inputs: [
 		{
 			name: 'codecsToConvert',

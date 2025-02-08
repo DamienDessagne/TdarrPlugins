@@ -12,7 +12,7 @@ const details = () => ({
     Operation: 'Transcode',
     Description: 'Renames audio tracks using many selection criteria and regexp.',
     Version: '1.0',
-    Tags: 'action,audio',
+    Tags: 'audio only,ffmpeg,pre-processing,configurable',
     Inputs: [
         {
             name: 'codecs',
