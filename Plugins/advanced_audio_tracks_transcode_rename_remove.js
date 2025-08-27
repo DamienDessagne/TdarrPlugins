@@ -483,7 +483,7 @@ const plugin = (file, libraryOptions, inputs) => {
 
                         // Set channels if needed
                         if(operation.transcode.channels) {
-                            let channels = track.channels || 2; // Default to stereo if channels are undefined
+                            let channels = operation.transcode.channels || 2; // Default to stereo if channels are undefined
                             if(codecChannelsLimits[targetCodec] && channels > codecChannelsLimits[targetCodec])
                                 channels = codecChannelsLimits[targetCodec];
                             audioTracksCommands.push(`-ac:${outputTrackIndex} ${channels}`);
