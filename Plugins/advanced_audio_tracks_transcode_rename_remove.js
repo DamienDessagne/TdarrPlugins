@@ -370,6 +370,10 @@ const plugin = (file, libraryOptions, inputs) => {
             updateTrackTitle("{o_bitrate_kbps}", (parseInt(bitrate) / 1000).toString());
         }
 
+        // Replace special characters that can make the command fail:
+        newTrackTitle = newTrackTitle.replaceAll(',', '‚'); // -> replace with a unicode SINGLE LOW-9 QUOTATION MARK
+        newTrackTitle = newTrackTitle.replaceAll('"', '″'); // -> replace with a unicode DOUBLE PRIME
+
         return newTrackTitle;
     }
 
