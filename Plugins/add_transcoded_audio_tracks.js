@@ -210,7 +210,7 @@ const plugin = (file, libraryOptions, inputs) => {
 			audioTracksCommands.push(`-map 0:a:${inputAudioTrackIndex}`); // Map the original audio track
 			audioTracksCommands.push(`-c:a:${outputAudioTrackIndex} ${targetCodec}`); // Set the new track's target codec
 			audioTracksCommands.push(`-b:a:${outputAudioTrackIndex} ${bitrate}`); // Set bitrate
-			audioTracksCommands.push(`-ac:${outputAudioTrackIndex} ${channels}`); // Set channels
+			audioTracksCommands.push(`-ac:a:${outputAudioTrackIndex} ${channels}`); // Set channels
 			audioTracksCommands.push(`-metadata:s:a:${outputAudioTrackIndex} 'language=${lang}'`); // Set language
 			audioTracksCommands.push(`-metadata:s:a:${outputAudioTrackIndex} "title=${title}"`); // Set track title
 		}
