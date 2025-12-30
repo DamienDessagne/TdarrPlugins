@@ -482,8 +482,18 @@ const plugin = (file, libraryOptions, inputs) => {
                         logEntry += targetCodec.toUpperCase();
 
                         // Set channels if needed
-                        if(operation.transcode.channels) {
-                            let channels = operation.transcode.channels || 2; // Default to stereo if channels are undefined
+                        let channels = operation.transcode.channels ? operation.transcode.channels : track.channels;
+                        let forceChannels = false;
+
+                        // Safety: Force 8 channels if target is AAC and source is >6ch with no user override.
+                        // This prevents crashes on exotic layouts (e.g. Atmos TFL/TFR) by forcing a standard 7.1 layout mapping.
+                        if (targetCodec.toLowerCase() === 'aac' && track.channels > 6 && !operation.transcode.channels) {
+                            logEntry += ` (forcing 8 channels for AAC, to avoid exotic layouts issues with AAC encoder)`;
+                            forceChannels = true;
+                            channels = 8;
+                        }
+
+                        if(operation.transcode.channels || channels !== track.channels || (codecChannelsLimits[targetCodec] && channels > codecChannelsLimits[targetCodec]) ||forceChannels) {
                             if(codecChannelsLimits[targetCodec] && channels > codecChannelsLimits[targetCodec])
                                 channels = codecChannelsLimits[targetCodec];
                             audioTracksCommands.push(`-ac:a:${outputTrackIndex} ${channels}`);
