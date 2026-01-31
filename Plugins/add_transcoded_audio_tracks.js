@@ -223,10 +223,27 @@ const plugin = (file, libraryOptions, inputs) => {
 	// If new audio tracks were created, build the ffmpeg command
 	if (requireTranscode) {
 		response.processFile = true;
+
+		// --- FIX FOR UNSUPPORTED SUBTITLES ---
+		// We only map subtitle streams that have a valid codec name identified by FFprobe.
+		const subtitleStreams = file.ffProbeData.streams.filter(s => s.codec_type === 'subtitle');
+		let subtitleCommands = '';
+
+		subtitleStreams.forEach((s, idx) => {
+			if (s.codec_name && s.codec_name !== 'none') {
+				subtitleCommands += `-map 0:s:${idx} -c:s:${idx} copy `;
+			} else {
+				log(` -> Subtitle track ${s.index}: Missing codec name. Skipping to prevent crash.`);
+			}
+		});
+
+		if (subtitleCommands === '') { subtitleCommands = '-sn '; }
+		// ----------------------------------------
+
 		response.preset = ',' + 
 			'-map 0:v -c:v copy ' + // Copy video stream without re-encoding
 			audioTracksCommands.join(' ') + ' ' + // Add audio tracks
-			'-map 0:s? -c:s copy ' + // Copy subtitles
+			subtitleCommands + // Add subtitles
 			'-metadata "copyright=' + copyrightData + pluginWatermark + '"'; // Add plugin watermark
 	} else {
 		log("Nothing to convert.");
